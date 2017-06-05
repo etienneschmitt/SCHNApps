@@ -103,7 +103,7 @@ void EditAttributeDialog::attribute_changed(const QString& attribute_name)
 		CellType cell_t = cell_type(orbit_comboBox->currentText().toStdString());
 		if (cell_t != CellType::Unknown)
 		{
-			const auto* ca_cont = mhg->const_attribute_container(cell_t);
+			const auto* ca_cont = mhg->attribute_container(cell_t);
 			if (!ca_cont || !ca_cont->has_array(attribute_name.toStdString()))
 				return;
 			auto* ca = ca_cont->get_chunk_array(attribute_name.toStdString());
@@ -161,7 +161,7 @@ void EditAttributeDialog::edit_attribute_validated()
 		if (cell_t != CellType::Unknown)
 		{
 			const QString& attribute_name = att_name_comboBox->currentText();
-			const auto* ca_cont = mhg->const_attribute_container(cell_t);
+			const auto* ca_cont = mhg->attribute_container(cell_t);
 			// TODO Avoid this const_cast !! E.S.
 			auto* ca = const_cast<MapHandlerGen::ChunkArrayGen*>(ca_cont->get_chunk_array(attribute_name.toStdString()));
 			if (ca)
@@ -172,18 +172,18 @@ void EditAttributeDialog::edit_attribute_validated()
 				for ( ; r < rend; ++r)
 				{
 					const uint32 emb = attribute_tableWidget->verticalHeaderItem(r)->text().toUInt();
-					std::stringstream sstream;
+					std::stringstream sstream1;
 					for (int32 c = 0; c < nbc; ++c)
-						sstream << attribute_tableWidget->item(r,c)->text().toStdString()  << " ";
+						sstream1 << attribute_tableWidget->item(r,c)->text().toStdString()  << " ";
 
-					ca->import_element(emb, sstream);
+					ca->import_element(emb, sstream1);
 					{
-						sstream = std::stringstream();
-						ca->export_element(emb, sstream, false, false);
+						std::stringstream sstream2; // g++-4.9 do not support sstream=std::stringstream(); so use another variable
+						ca->export_element(emb, sstream2, false, false);
 						for (int32 c = 0; c < nbc; ++c)
 						{
 							std::string val;
-							sstream >> val;
+							sstream2 >> val;
 							attribute_tableWidget->item(r,c)->setText(QString::fromStdString(val));
 						}
 					}
