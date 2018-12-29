@@ -109,7 +109,7 @@ const Image3D*Plugin_Image::get_image(const QString& im_path)
 
 void Plugin_Image::import_image_dialog()
 {
-	auto filenames = QFileDialog::getOpenFileNames(nullptr, "Import 3D images", schnapps_->get_app_path(),  "3DImages (*.inr *.vtk *.inr.gz *.vtk.gz)");
+	auto filenames = QFileDialog::getOpenFileNames(nullptr, "Import 3D images", schnapps_->app_path(),  "3DImages (*.inr *.vtk *.inr.gz *.vtk.gz)");
 	for (const auto& im : filenames)
 		import_image(im);
 }
