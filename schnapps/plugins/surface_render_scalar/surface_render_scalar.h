@@ -24,133 +24,23 @@
 #ifndef SCHNAPPS_PLUGIN_SURFACE_RENDER_SCALAR_H_
 #define SCHNAPPS_PLUGIN_SURFACE_RENDER_SCALAR_H_
 
-#include "dll.h"
-#include <schnapps/core/plugin_interaction.h>
+#include <schnapps/plugins/surface_render_scalar/dll.h>
+#include <schnapps/plugins/surface_render_scalar/map_parameters.h>
+
 #include <schnapps/core/types.h>
-#include <schnapps/core/schnapps.h>
-#include <schnapps/core/map_handler.h>
-
-#include <surface_render_scalar_dock_tab.h>
-
-#include <cgogn/rendering/shaders/shader_scalar_per_vertex.h>
+#include <schnapps/core/plugin_interaction.h>
 
 namespace schnapps
 {
 
+class View;
+namespace plugin_cmap2_provider { class CMap2Handler; }
+
 namespace plugin_surface_render_scalar
 {
 
-class Plugin_SurfaceRenderScalar;
-
-struct SCHNAPPS_PLUGIN_SURFACE_RENDER_SCALAR_API MapParameters
-{
-	friend class Plugin_SurfaceRenderScalar;
-
-	MapParameters() :
-		position_vbo_(nullptr),
-		scalar_vbo_(nullptr),
-		color_map_(cgogn::rendering::ShaderScalarPerVertex::BWR),
-		expansion_(0),
-		nb_iso_levels_(10),
-		show_iso_lines_(false)
-	{
-		initialize_gl();
-	}
-
-	cgogn::rendering::VBO* get_position_vbo() const { return position_vbo_; }
-	void set_position_vbo(cgogn::rendering::VBO* v)
-	{
-		position_vbo_ = v;
-		if (position_vbo_ && position_vbo_->vector_dimension() == 3)
-			shader_scalar_per_vertex_param_->set_position_vbo(position_vbo_);
-		else
-			position_vbo_ = nullptr;
-	}
-
-	cgogn::rendering::VBO* get_scalar_vbo() const { return scalar_vbo_; }
-	void set_scalar_vbo(cgogn::rendering::VBO* v)
-	{
-		scalar_vbo_ = v;
-		if (scalar_vbo_ && scalar_vbo_->vector_dimension() == 1)
-		{
-			const CMap2::VertexAttribute<SCALAR>& attr = map_->template get_attribute<SCALAR, CMap2::Vertex::ORBIT>(QString::fromStdString(scalar_vbo_->name()));
-			if (!attr.is_valid())
-			{
-				cgogn_log_warning("plugin_surface_render_scalar|MapParameters::set_scalar_vbo") << "The attribute \"" << scalar_vbo_->name() << "\" is not valid. Its data should be of type " << cgogn::name_of_type(SCALAR()) << ".";
-				scalar_vbo_ = nullptr;
-				return;
-			}
-			SCALAR scalar_min = std::numeric_limits<SCALAR>::max();
-			SCALAR scalar_max = std::numeric_limits<SCALAR>::lowest();
-			for (const SCALAR& s : attr)
-			{
-				scalar_min = s < scalar_min ? s : scalar_min;
-				scalar_max = s > scalar_max ? s : scalar_max;
-			}
-			shader_scalar_per_vertex_param_->set_scalar_vbo(scalar_vbo_);
-			shader_scalar_per_vertex_param_->min_value_ = scalar_min;
-			shader_scalar_per_vertex_param_->max_value_ = scalar_max;
-		}
-		else
-			scalar_vbo_ = nullptr;
-	}
-
-	cgogn::rendering::ShaderScalarPerVertex::ColorMap get_color_map() const { return color_map_; }
-	void set_color_map(int color_map)
-	{
-		color_map_ = cgogn::rendering::ShaderScalarPerVertex::ColorMap(color_map);
-		shader_scalar_per_vertex_param_->color_map_ = color_map_;
-	}
-
-	int32 get_expansion() const { return expansion_; }
-	void set_expansion(int32 expansion)
-	{
-		expansion_ = expansion;
-		shader_scalar_per_vertex_param_->expansion_ = expansion_;
-	}
-
-	bool get_show_iso_lines() const { return show_iso_lines_; }
-	void set_show_iso_lines(bool show_iso_lines)
-	{
-		show_iso_lines_ = show_iso_lines;
-		shader_scalar_per_vertex_param_->show_iso_lines_ = show_iso_lines_;
-	}
-
-	int32 get_nb_iso_levels() const { return nb_iso_levels_; }
-	void set_nb_iso_levels(int32 n)
-	{
-		nb_iso_levels_ = n;
-		shader_scalar_per_vertex_param_->nb_iso_levels_ = nb_iso_levels_;
-	}
-
-private:
-
-	void initialize_gl()
-	{
-		shader_scalar_per_vertex_param_ = cgogn::rendering::ShaderScalarPerVertex::generate_param();
-		shader_scalar_per_vertex_param_->color_map_ = color_map_;
-		shader_scalar_per_vertex_param_->expansion_ = expansion_;
-		shader_scalar_per_vertex_param_->min_value_ = 0.0f;
-		shader_scalar_per_vertex_param_->max_value_ = 1.0f;
-		shader_scalar_per_vertex_param_->show_iso_lines_ = show_iso_lines_;
-		shader_scalar_per_vertex_param_->nb_iso_levels_ = nb_iso_levels_;
-
-		set_position_vbo(position_vbo_);
-		set_scalar_vbo(scalar_vbo_);
-	}
-
-	CMap2Handler* map_;
-
-	std::unique_ptr<cgogn::rendering::ShaderScalarPerVertex::Param> shader_scalar_per_vertex_param_;
-
-	cgogn::rendering::VBO* position_vbo_;
-	cgogn::rendering::VBO* scalar_vbo_;
-
-	cgogn::rendering::ShaderScalarPerVertex::ColorMap color_map_;
-	int32 expansion_;
-	int32 nb_iso_levels_;
-	bool show_iso_lines_;
-};
+class SurfaceRenderScalar_DockTab;
+using CMap2Handler = plugin_cmap2_provider::CMap2Handler;
 
 /**
 * @brief Plugin that renders color-coded scalar values on surface vertices
@@ -161,31 +51,31 @@ class SCHNAPPS_PLUGIN_SURFACE_RENDER_SCALAR_API Plugin_SurfaceRenderScalar : pub
 	Q_PLUGIN_METADATA(IID "SCHNApps.Plugin")
 	Q_INTERFACES(schnapps::Plugin)
 
-	friend class SurfaceRenderScalar_DockTab;
-
 public:
 
-	inline Plugin_SurfaceRenderScalar() {}
+	Plugin_SurfaceRenderScalar();
+	~Plugin_SurfaceRenderScalar() override {}
+	static QString plugin_name();
 
-	~Plugin_SurfaceRenderScalar() {}
+	MapParameters& parameters(View* view, CMap2Handler* mh);
+	bool check_docktab_activation();
 
 private:
-
-	MapParameters& get_parameters(View* view, MapHandlerGen* map);
 
 	bool enable() override;
 	void disable() override;
 
-	void draw(View*, const QMatrix4x4& proj, const QMatrix4x4& mv) override {}
-	void draw_map(View* view, MapHandlerGen* map, const QMatrix4x4& proj, const QMatrix4x4& mv) override;
+	inline void draw(View*, const QMatrix4x4&, const QMatrix4x4&) override {}
+	void draw_object(View* view, Object* o, const QMatrix4x4& proj, const QMatrix4x4& mv) override;
 
-	void keyPress(View*, QKeyEvent*) override {}
-	void keyRelease(View*, QKeyEvent*) override {}
-	void mousePress(View*, QMouseEvent*) override {}
-	void mouseRelease(View*, QMouseEvent*) override {}
-	void mouseMove(View*, QMouseEvent*) override {}
-	void wheelEvent(View*, QWheelEvent*) override {}
-	void resizeGL(View* /*view*/, int /*width*/, int /*height*/) override {}
+	inline bool keyPress(View*, QKeyEvent*) override { return true; }
+	inline bool keyRelease(View*, QKeyEvent*) override { return true; }
+	inline bool mousePress(View*, QMouseEvent*) override { return true; }
+	inline bool mouseRelease(View*, QMouseEvent*) override { return true; }
+	inline bool mouseMove(View*, QMouseEvent*) override { return true; }
+	inline bool wheelEvent(View*, QWheelEvent*) override { return true; }
+
+	inline void resizeGL(View*, int, int) override {}
 
 	void view_linked(View*) override;
 	void view_unlinked(View*) override;
@@ -193,8 +83,15 @@ private:
 private slots:
 
 	// slots called from View signals
-	void map_linked(MapHandlerGen* map);
-	void map_unlinked(MapHandlerGen* map);
+	void object_linked(Object* o);
+	void object_unlinked(Object* o);
+
+private:
+
+	void add_linked_map(View* view, CMap2Handler* mh);
+	void remove_linked_map(View* view, CMap2Handler* mh);
+
+private slots:
 
 	// slots called from MapHandler signals
 	void linked_map_vbo_added(cgogn::rendering::VBO* vbo);
@@ -204,54 +101,26 @@ private slots:
 
 	void viewer_initialized();
 
-	void update_dock_tab();
+public:
 
-public slots:
+	void set_position_vbo(View* view, CMap2Handler* mh, cgogn::rendering::VBO* vbo, bool update_dock_tab);
+	void set_scalar_vbo(View* view, CMap2Handler* mh, cgogn::rendering::VBO* vbo, bool update_dock_tab);
+	void set_color_map(View* view, CMap2Handler* mh, cgogn::rendering::ShaderScalarPerVertex::ColorMap cm, bool update_dock_tab);
+	void set_auto_update_min_max(View* view, CMap2Handler* mh, bool b, bool update_dock_tab);
+	void set_scalar_min(View* view, CMap2Handler* mh, double d, bool update_dock_tab);
+	void set_scalar_max(View* view, CMap2Handler* mh, double d, bool update_dock_tab);
+	void set_expansion(View* view, CMap2Handler* mh, int32 i, bool update_dock_tab);
+	void set_show_iso_lines(View* view, CMap2Handler* mh, bool b, bool update_dock_tab);
+	void set_nb_iso_levels(View* view, CMap2Handler* mh, int32 i, bool update_dock_tab);
 
-	void set_position_vbo(View* view, MapHandlerGen* map, cgogn::rendering::VBO* vbo);
-	inline void set_position_vbo(const QString& view_name, const QString& map_name, const QString& vbo_name)
-	{
-		MapHandlerGen* map = schnapps_->get_map(map_name);
-		if (map)
-			set_position_vbo(schnapps_->get_view(view_name), map, map->get_vbo(vbo_name));
-	}
-
-	void set_scalar_vbo(View* view, MapHandlerGen* map, cgogn::rendering::VBO* vbo);
-	inline void set_scalar_vbo(const QString& view_name, const QString& map_name, const QString& vbo_name)
-	{
-		MapHandlerGen* map = schnapps_->get_map(map_name);
-		if (map)
-			set_scalar_vbo(schnapps_->get_view(view_name), map, map->get_vbo(vbo_name));
-	}
-
-	void set_color_map(View* view, MapHandlerGen* map, cgogn::rendering::ShaderScalarPerVertex::ColorMap cm);
-	void set_color_map(const QString& view_name, const QString& map_name, cgogn::rendering::ShaderScalarPerVertex::ColorMap cm)
-	{
-		set_color_map(schnapps_->get_view(view_name), schnapps_->get_map(map_name), cm);
-	}
-
-	void set_expansion(View* view, MapHandlerGen* map, int32 e);
-	void set_expansion(const QString& view_name, const QString& map_name, int32 e)
-	{
-		set_expansion(schnapps_->get_view(view_name), schnapps_->get_map(map_name), e);
-	}
-
-	void set_show_iso_lines(View* view, MapHandlerGen* map, bool b);
-	void set_show_iso_lines(const QString& view_name, const QString& map_name, bool b)
-	{
-		set_show_iso_lines(schnapps_->get_view(view_name), schnapps_->get_map(map_name), b);
-	}
-
-	void set_nb_iso_levels(View* view, MapHandlerGen* map, int32 n);
-	void set_nb_iso_levels(const QString& view_name, const QString& map_name, int32 n)
-	{
-		set_nb_iso_levels(schnapps_->get_view(view_name), schnapps_->get_map(map_name), n);
-	}
+	void update_min_max(View* view, CMap2Handler* mh, bool update_dock_tab);
 
 private:
 
 	SurfaceRenderScalar_DockTab* dock_tab_;
-	std::map<View*, std::map<MapHandlerGen*, MapParameters>> parameter_set_;
+	std::map<View*, std::map<CMap2Handler*, MapParameters>> parameter_set_;
+
+	QString setting_auto_load_position_attribute_;
 };
 
 } // namespace plugin_surface_render_scalar
