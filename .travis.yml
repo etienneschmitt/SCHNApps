@@ -13,6 +13,7 @@ addons:
     apt:
       sources:
         - ubuntu-toolchain-r-test
+        - sourceline: "ppa:samuel-bachmann/boost"
         - sourceline: "ppa:beineri/opt-qt58-trusty"
         - sourceline: "ppa:corentinjabot/cmake-backport" #cmake 3.7.2
         # for cmake 3.12 use ppa:dluxen/cmake-backports
@@ -25,22 +26,41 @@ addons:
         - cmake
         - libeigen3-dev
         - libtinyxml2-dev/trusty-backports
+        - libboost-system1.60-dev
+        - libboost-iostreams1.60-dev
+        - libboost-thread1.60-dev
+        - libboost-program-options1.60-dev
+        - libgmp-dev
+        - libmpfr-dev
+        - zlib1g-dev
     homebrew:
       packages:
         - qt5
         - eigen
         - tinyxml2
-
-script:
-    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
-        source /opt/qt58/bin/qt58-env.sh ;
-      fi
+        - boost
 
 branches:
     only:
       - develop
 
 install:
+    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then (brew update || true) && brew uninstall --ignore-dependencies cgal && brew install cgal;  fi
+    # (Linux) Build from source
+    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then wget https://github.com/CGAL/cgal/releases/download/releases/CGAL-4.11.1/CGAL-4.11.1.zip; fi
+    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then unzip CGAL-4.11.1.zip; fi
+    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then cd CGAL-4.11.1; fi
+    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then mkdir build; fi
+    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then cd build; fi
+    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then cmake ../; fi
+    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then make; fi
+    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo make install; fi
+    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then cd ../../; fi
+
+    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
+        source /opt/qt58/bin/qt58-env.sh ;
+      fi
+
     - git clone -b develop --depth=1  https://github.com/cgogn/CGoGN_2
     - cd CGoGN_2
     - mkdir build

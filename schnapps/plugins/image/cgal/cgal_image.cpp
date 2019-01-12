@@ -22,6 +22,7 @@
 *                                                                              *
 *******************************************************************************/
 
+#include <schnapps/plugins/meshgen/dll.h>
 #include "cgal_image.h"
 
 namespace schnapps
@@ -95,3 +96,5 @@ SCHNAPPS_PLUGIN_IMAGE_API SIGN get_cgal_sign(cgogn::io::DataType data_type)
 } // namespace plugin_image
 
 } // namespace schnapps
+
+
