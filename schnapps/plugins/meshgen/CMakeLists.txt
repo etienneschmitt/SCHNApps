@@ -24,6 +24,10 @@ endif(CGAL_FOUND)
 
 add_subdirectory(netgen)
 
+if(APPLE)
+	set (WITH_CGAL_ImageIO "OFF") # too much bugs
+endif()
+
 add_library(${PROJECT_NAME} SHARED "")
 add_library(schnapps::meshgen ALIAS plugin_meshgen)
 

@@ -21,6 +21,10 @@ find_package(CGAL COMPONENTS Core ImageIO)
 add_library(${PROJECT_NAME} SHARED "")
 add_library(schnapps::image ALIAS plugin_image)
 
+if(APPLE)
+	set (WITH_CGAL_ImageIO "OFF") # too much bugs
+endif()
+
 if(WITH_CGAL_ImageIO)
 	include( ${CGAL_USE_FILE})
 	if(MSVC)
