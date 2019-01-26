@@ -22,8 +22,8 @@
 *                                                                              *
 *******************************************************************************/
 
+#include <schnapps/plugins/image/cgal/cgal_image.h>
 #include <schnapps/plugins/meshgen/dll.h>
-#include "cgal_image.h"
 
 namespace schnapps
 {

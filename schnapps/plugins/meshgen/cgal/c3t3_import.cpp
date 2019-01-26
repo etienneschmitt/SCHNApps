@@ -25,7 +25,7 @@
 #include "c3t3_import.h"
 #include "cgogn_surface_to_cgal_polyhedron.h"
 #ifdef PLUGIN_MESHGEN_WITH_CGAL_IMAGEIO
-#include <cgal/cgal_image.h>
+#include <schnapps/plugins/image/cgal/cgal_image.h>
 #include <CGAL/Labeled_image_mesh_domain_3.h>
 #endif
 #include <CGAL/Polyhedral_mesh_domain_3.h>
